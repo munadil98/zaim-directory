@@ -125,7 +125,7 @@
             }, [contacts, searchQuery]);
 
             const handleWhatsApp = (contact) => {
-                const message = `আসসালামু আলাইকুম\n জনাব ${contact.name}\n যয়িম(আলা) ${contact.majlis} মজলিস।`;
+                const message = `আসসালামু আলাইকুম\nজনাব ${contact.name}\nযয়িম(আলা) ${contact.majlis} মজলিস।`;
                 const encodedMessage = encodeURIComponent(message);
                 const phone = (contact.mobile || '').replace(/\D/g, '');
                 window.open(`https://wa.me/${phone}?text=${encodedMessage}`, '_blank');
