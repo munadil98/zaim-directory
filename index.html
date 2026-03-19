@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>যয়ীম ডিরেক্টরি - মজলিস আনসারুল্লাহ্, বাংলাদেশ</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- PapaParse for CSV -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f5f5f5;
+        }
+        .text-muted { color: #6b7280; }
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        // Inline SVG Icons for maximum compatibility
+        const Icons = {
+            Phone: () => (
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            ),
+            MessageCircle: () => (
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+            ),
+            Search: ({ className }) => (
+                <svg className={className} xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            ),
+            Users: ({ className }) => (
+                <svg className={className} xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            ),
+            MapPin: ({ className }) => (
+                <svg className={className} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            ),
+            Loader2: ({ className }) => (
+                <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg>
+            ),
+            ExternalLink: ({ className }) => (
+                <svg className={className} xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            )
+        };
+
+        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1n3Xh_NQA8hqLtAocIFc2BmYeq4CDCCgmmdKfDPkdUto/export?format=csv';
+
+        function App() {
+            const [contacts, setContacts] = useState([]);
+            const [loading, setLoading] = useState(true);
+            const [error, setError] = useState(null);
+            const [searchQuery, setSearchQuery] = useState('');
+
+            useEffect(() => {
+                fetchContacts();
+            }, []);
+
+            const fetchContacts = async () => {
+                try {
+                    setLoading(true);
+                    const response = await fetch(SHEET_URL);
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    const csvText = await response.text();
+                    
+                    Papa.parse(csvText, {
+                        complete: (results) => {
+                            if (results.data && results.data.length > 4) {
+                                const dataRows = results.data.slice(4);
+                                const parsedContacts = dataRows
+                                    .filter(row => row && row[1] && row[2])
+                                    .map(row => ({
+                                        sl: row[0] || '',
+                                        majlis: row[1] || '',
+                                        name: row[2] || '',
+                                        mobile: row[3] || '',
+                                        district: row[4] || '',
+                                    }));
+                                
+                                setContacts(parsedContacts);
+                            } else {
+                                setError('শিটে কোনো তথ্য পাওয়া যায়নি');
+                            }
+                            setLoading(false);
+                        },
+                        error: (err) => {
+                            setError('তথ্য প্রসেস করতে সমস্যা হয়েছে');
+                            setLoading(false);
+                        }
+                    });
+                } catch (err) {
+                    setError('সার্ভার থেকে তথ্য পাওয়া যায়নি। ইন্টারনেট কানেকশন চেক করুন।');
+                    setLoading(false);
+                }
+            };
+
+            const filteredContacts = useMemo(() => {
+                return contacts.filter(contact => 
+                    (contact.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    (contact.majlis || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    (contact.district || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    (contact.mobile || '').includes(searchQuery)
+                );
+            }, [contacts, searchQuery]);
+
+            const handleWhatsApp = (contact) => {
+                const message = `আসসালামু আলাইকুম\n জনাব ${contact.name}\n যয়িম(আলা) ${contact.majlis} মজলিস।`;
+                const encodedMessage = encodeURIComponent(message);
+                const phone = (contact.mobile || '').replace(/\D/g, '');
+                window.open(`https://wa.me/${phone}?text=${encodedMessage}`, '_blank');
+            };
+
+            const handleCall = (mobile) => {
+                window.location.href = `tel:${mobile}`;
+            };
+
+            return (
+                <div className="min-h-screen bg-[#f5f5f5] text-[#1a1a1a]">
+                    {/* Header */}
+                    <header className="bg-white border-b border-black/5 sticky top-0 z-10 shadow-sm">
+                        <div className="max-w-2xl mx-auto px-4 py-6">
+                            <div className="flex items-center justify-between mb-6">
+                                <div>
+                                    <h1 className="text-2xl font-semibold tracking-tight text-gray-900">যয়ীম ডিরেক্টরি</h1>
+                                    <p className="text-sm text-muted mt-1">মজলিস আনসারুল্লাহ্, বাংলাদেশ</p>
+                                </div>
+                                <div className="bg-emerald-50 p-3 rounded-2xl">
+                                    <Icons.Users className="text-emerald-600" />
+                                </div>
+                            </div>
+
+                            {/* Search Bar */}
+                            <div className="relative group">
+                                <Icons.Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-emerald-500 transition-colors" />
+                                <input
+                                    type="text"
+                                    placeholder="নাম, মজলিস বা জেলা দিয়ে খুঁজুন..."
+                                    className="w-full bg-gray-100 border-none rounded-2xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white transition-all outline-none text-base"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                            </div>
+                        </div>
+                    </header>
+
+                    {/* Main Content */}
+                    <main className="max-w-2xl mx-auto px-4 py-8">
+                        {loading ? (
+                            <div className="flex flex-col items-center justify-center py-20 space-y-4">
+                                <Icons.Loader2 className="text-emerald-500 animate-spin" />
+                                <p className="text-sm text-muted font-medium">তথ্য লোড হচ্ছে...</p>
+                            </div>
+                        ) : error ? (
+                            <div className="bg-red-50 border border-red-100 rounded-2xl p-6 text-center">
+                                <p className="text-red-600 font-medium">{error}</p>
+                                <button 
+                                    onClick={fetchContacts}
+                                    className="mt-4 text-sm font-semibold text-red-700 underline underline-offset-4"
+                                >
+                                    আবার চেষ্টা করুন
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between px-2 mb-2">
+                                    <span className="text-xs font-semibold uppercase tracking-wider text-muted">
+                                        মোট {filteredContacts.length} জন পাওয়া গেছে
+                                    </span>
+                                </div>
+
+                                {filteredContacts.length > 0 ? (
+                                    filteredContacts.map((contact, index) => (
+                                        <div 
+                                            key={`${contact.mobile}-${index}`}
+                                            className="bg-white rounded-2xl p-5 shadow-sm border border-black/5 hover:shadow-md transition-shadow group"
+                                        >
+                                            <div className="flex justify-between items-start">
+                                                <div className="space-y-2">
+                                                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-emerald-600 transition-colors">
+                                                        {contact.name}
+                                                    </h3>
+                                                    <div className="flex flex-wrap gap-y-2 gap-x-4">
+                                                        <div className="flex items-center text-sm text-muted">
+                                                            <Icons.Users className="mr-1.5 opacity-70" />
+                                                            <span>{contact.majlis} মজলিস</span>
+                                                        </div>
+                                                        <div className="flex items-center text-sm text-muted">
+                                                            <Icons.MapPin className="mr-1.5 opacity-70" />
+                                                            <span>{contact.district}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-3 mt-6">
+                                                <button
+                                                    onClick={() => handleCall(contact.mobile)}
+                                                    className="flex items-center justify-center gap-2 bg-gray-900 text-white py-3.5 rounded-xl font-medium hover:bg-gray-800 active:scale-[0.98] transition-all"
+                                                >
+                                                    <Icons.Phone />
+                                                    <span>কল করুন</span>
+                                                </button>
+                                                <button
+                                                    onClick={() => handleWhatsApp(contact)}
+                                                    className="flex items-center justify-center gap-2 bg-emerald-600 text-white py-3.5 rounded-xl font-medium hover:bg-emerald-700 active:scale-[0.98] transition-all"
+                                                >
+                                                    <Icons.MessageCircle />
+                                                    <span>হোয়াটসঅ্যাপ</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
+                                        <Icons.Search className="text-gray-300 mx-auto mb-4 w-12 h-12" />
+                                        <p className="text-gray-500 font-medium">কোনো তথ্য পাওয়া যায়নি</p>
+                                        <button 
+                                            onClick={() => setSearchQuery('')}
+                                            className="mt-2 text-sm text-emerald-600 font-semibold"
+                                        >
+                                            সার্চ ক্লিয়ার করুন
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </main>
+
+                    {/* Footer */}
+                    <footer className="max-w-2xl mx-auto px-4 py-12 text-center">
+                        <div className="h-px bg-gray-200 w-full mb-8" />
+                        <p className="text-xs text-muted leading-relaxed">
+                            মজলিস আনসারুল্লাহ্, বাংলাদেশ ডিরেক্টরি অ্যাপ<br />
+                            &copy; ২০২৬ সর্বস্বত্ব সংরক্ষিত
+                        </p>
+                        <a 
+                            href={SHEET_URL.replace('/export?format=csv', '/edit')}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center mt-4 text-xs font-medium text-emerald-600 hover:underline"
+                        >
+                            গুগল শিট দেখুন <Icons.ExternalLink className="ml-1" />
+                        </a>
+                    </footer>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
